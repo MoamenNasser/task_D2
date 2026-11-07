@@ -119,9 +119,18 @@ public static class AwardRequestValidator
         }
     }
 
+    /// <summary>Checks one identifier character against plain ASCII ranges.</summary>
+    /// <remarks>Deliberately not <see cref="char.IsLetterOrDigit(char)"/>, which also accepts Unicode letters and digits.</remarks>
+    /// <param name="c">Character to check.</param>
+    /// <returns>True for an ASCII letter, an ASCII digit, <c>_</c> or <c>-</c>.</returns>
     private static bool IsIdChar(char c) =>
         c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '_' or '-';
 
+    /// <summary>Reads one required identifier field (sourceId, externalTransactionId or walletId).</summary>
+    /// <param name="root">The request's top-level JSON object.</param>
+    /// <param name="field">Exact, case-sensitive field name.</param>
+    /// <param name="errors">Receives a <see cref="FieldError"/> if the field is missing, not a string, or badly formatted.</param>
+    /// <returns>The identifier, or null when it is invalid (an error was added).</returns>
     private static string? ReadIdentifier(JsonElement root, string field, List<FieldError> errors)
     {
         // TryGetProperty is an ordinal (case-sensitive) match, so "sourceid" counts as missing.
@@ -144,6 +153,10 @@ public static class AwardRequestValidator
         return text;
     }
 
+    /// <summary>Reads the required <c>points</c> field as a strict JSON integer in the allowed range.</summary>
+    /// <param name="root">The request's top-level JSON object.</param>
+    /// <param name="errors">Receives a <see cref="FieldError"/> if the field is missing, not an integer, or out of range.</param>
+    /// <returns>The points, or null when they are invalid (an error was added).</returns>
     private static int? ReadPoints(JsonElement root, List<FieldError> errors)
     {
         if (!root.TryGetProperty("points", out var value))
@@ -167,7 +180,10 @@ public static class AwardRequestValidator
         return (int)number;
     }
 
-    /// <summary>Returns the first key that appears twice within the same object, searching nested values too.</summary>
+    /// <summary>Finds the first key that appears twice within the same object, searching nested values too.</summary>
+    /// <remarks>Each object gets its own set of seen names, so the same name at different levels is allowed.</remarks>
+    /// <param name="element">Element to search (normally the document root).</param>
+    /// <returns>The repeated key, or null if there is none.</returns>
     private static string? FindDuplicateKey(JsonElement element)
     {
         switch (element.ValueKind)

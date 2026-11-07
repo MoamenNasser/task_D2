@@ -50,6 +50,11 @@ public static class ApiEndpoints
         app.MapGet("/wallets/{walletId}", GetWallet);
     }
 
+    /// <summary>Handles <c>POST /awards</c>: read the body, validate it, apply the award, map the outcome to HTTP.</summary>
+    /// <remarks>Validation runs before the service is called, so an invalid body never reaches the award or wallet checks.</remarks>
+    /// <param name="request">The incoming request; only its body is read.</param>
+    /// <param name="service">The singleton wallet service, injected by DI.</param>
+    /// <returns>201 or 200 with the award record; 400, 404, 409 or 413 with an <see cref="ErrorBody"/>.</returns>
     private static async Task<IResult> PostAwardAsync(HttpRequest request, WalletService service)
     {
         var body = await ReadBodyAsync(request);
@@ -81,6 +86,10 @@ public static class ApiEndpoints
         };
     }
 
+    /// <summary>Handles <c>GET /wallets/{walletId}</c>.</summary>
+    /// <param name="walletId">Wallet id from the route, compared case-sensitively.</param>
+    /// <param name="service">The singleton wallet service, injected by DI.</param>
+    /// <returns>200 with a <see cref="WalletResponse"/>, or 404 with an <see cref="ErrorBody"/>.</returns>
     private static IResult GetWallet(string walletId, WalletService service)
     {
         // A malformed id can never name an existing wallet, so it is reported as not found.
@@ -91,7 +100,10 @@ public static class ApiEndpoints
     }
 
     /// <summary>Reads the body, or returns null when it is larger than <see cref="MaxBodyBytes"/>.</summary>
-    /// <remarks>Enforced here rather than via Kestrel limits so it also applies under the in-memory test server.</remarks>
+    /// <remarks>Enforced here rather than via Kestrel limits so it also applies under the in-memory test server.
+    /// Checks <c>Content-Length</c> first, then caps the bytes actually read (for chunked bodies with no length).</remarks>
+    /// <param name="request">The incoming request.</param>
+    /// <returns>The body bytes, or null if the body is over the limit.</returns>
     private static async Task<byte[]?> ReadBodyAsync(HttpRequest request)
     {
         if (request.ContentLength > MaxBodyBytes)
@@ -112,9 +124,21 @@ public static class ApiEndpoints
         return buffer.ToArray();
     }
 
+    /// <summary>Builds an error result for a handler to return.</summary>
+    /// <param name="status">HTTP status code.</param>
+    /// <param name="code">Machine-readable error code, e.g. <c>wallet_not_found</c>.</param>
+    /// <param name="message">Human-readable explanation.</param>
+    /// <returns>A JSON <see cref="ErrorBody"/> result with the given status.</returns>
     private static IResult Error(int status, string code, string message) =>
         Results.Json(new ErrorBody(code, message), statusCode: status);
 
+    /// <summary>Writes an error body straight to the response, for middleware that has no handler result to return.</summary>
+    /// <remarks>Used by the status-code-pages and exception handlers.</remarks>
+    /// <param name="response">Response to write to.</param>
+    /// <param name="status">HTTP status code.</param>
+    /// <param name="code">Machine-readable error code.</param>
+    /// <param name="message">Human-readable explanation.</param>
+    /// <returns>A task that completes when the body is written.</returns>
     private static Task WriteErrorAsync(HttpResponse response, int status, string code, string message)
     {
         response.StatusCode = status;

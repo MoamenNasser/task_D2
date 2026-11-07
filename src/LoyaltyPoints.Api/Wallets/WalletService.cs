@@ -47,12 +47,18 @@ public sealed record AwardOutcome(AwardStatus Status, Award? Award);
 /// </remarks>
 public sealed class WalletService
 {
+    /// <summary>The one lock that guards every field below.</summary>
     private readonly object _gate = new();
+
+    /// <summary>Wallet id to balance (ordinal, case-sensitive keys). Wallets are never added after start-up.</summary>
     private readonly Dictionary<string, long> _balances;
 
-    // (SourceId, ExternalTransactionId). A real tuple, so ("A_", "B") and ("A", "_B") never collide;
-    // ValueTuple equality uses ordinal (case-sensitive) string comparison.
+    /// <summary>Accepted awards keyed by (SourceId, ExternalTransactionId).</summary>
+    /// <remarks>A real tuple, so ("A_", "B") and ("A", "_B") never collide;
+    /// ValueTuple equality uses ordinal (case-sensitive) string comparison.</remarks>
     private readonly Dictionary<(string SourceId, string ExternalTransactionId), Award> _awards = new();
+
+    /// <summary>Number for the next award id ("AW-1", "AW-2", ...). Only changed under the lock.</summary>
     private long _nextAwardNumber = 1;
 
     /// <summary>Creates the service with the wallets that exist from the start.</summary>
