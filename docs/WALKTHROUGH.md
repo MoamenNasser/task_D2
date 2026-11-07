@@ -230,6 +230,19 @@ The work went in this order:
 
 ## 8. Reading the API reference
 
-The public types carry XML doc comments (`///`). The build writes them to
+Every type, method and field carries an XML doc comment (`///`), private ones included. The build writes them to
 `src/LoyaltyPoints.Api/bin/<Configuration>/net8.0/LoyaltyPoints.Api.xml`, and IDEs show them on hover.
 Because warnings are errors, a public type or member without a comment fails the build (`CS1591`).
+
+To generate the HTML reference (this walkthrough plus every type and member):
+
+```bash
+dotnet tool restore                          # DocFX 2.81.0, pinned in .config/dotnet-tools.json
+dotnet docfx docs/docfx.json                 # writes docs/_site/ (git-ignored)
+dotnet docfx serve docs/_site --port 18090   # open http://localhost:18090
+```
+
+DocFX reads the project through the C# compiler, so records, enums and file-scoped namespaces come out correctly.
+Doxygen 1.9.1 was tried first: it skipped all the records and the enum, and misread an expression-bodied method.
+`Program` does not appear in the reference. It is the top-level entry point and lives in the global namespace, which DocFX leaves out.
+The first `dotnet tool restore` downloads about 100 MB.

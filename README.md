@@ -37,6 +37,11 @@ dotnet test
 
 # run the curl smoke test against a freshly started service
 scripts/smoke.sh http://127.0.0.1:8080
+
+# generate the HTML docs (API reference + walkthrough) into docs/_site/, then view them
+dotnet tool restore                                   # installs DocFX 2.81.0 from .config/dotnet-tools.json
+dotnet docfx docs/docfx.json
+dotnet docfx serve docs/_site --port 18090            # open http://localhost:18090
 ```
 
 **Reset to the initial state:** stop the process (Ctrl+C) and start it again. State is in memory only.
@@ -118,6 +123,7 @@ src/LoyaltyPoints.Api/
 tests/LoyaltyPoints.Tests/            xUnit tests
 scripts/smoke.sh                      curl checks against a running service
 docs/WALKTHROUGH.md                   how the code works and how the tests prove it
+docs/docfx.json                       DocFX config for the generated HTML docs
 ```
 
 ## Design notes
@@ -130,7 +136,8 @@ docs/WALKTHROUGH.md                   how the code works and how the tests prove
 - The award is stored before the wallet is credited. `Dictionary.Add` can throw and the addition cannot,
   so a failure never leaves a credited balance without an award.
 - `WalletService` is registered as a singleton, because it is the state. Restarting the process resets it.
-- Public types carry XML doc comments (`GenerateDocumentationFile` is on, so a missing comment fails the build).
+- Every type, method and field carries an XML doc comment. For public members this is enforced: `GenerateDocumentationFile`
+  is on and warnings are errors, so a missing comment fails the build. DocFX turns the comments into the HTML reference.
 
 ## Tests
 

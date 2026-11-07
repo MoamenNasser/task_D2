@@ -11,3 +11,6 @@ TestResults/
 *.docx
 docs/*.pdf
 docs/*_tmp.html
+# generated docs (dotnet docfx docs/docfx.json)
+docs/api/
+docs/_site/
