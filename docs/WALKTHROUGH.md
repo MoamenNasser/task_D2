@@ -187,14 +187,14 @@ So every HTTP test gets a fresh app and fresh wallets, and no test depends on an
 
 | # | Requirement | Covered by |
 | --- | --- | --- |
-| V1 | ids required, string, 1-64 of `[A-Za-z0-9_-]`, case-sensitive | Validator: IdentifierBoundaries, RejectsBadIdentifierValues, IdentifiersAreCaseSensitiveAndKeptAsIs, FieldNamesAreCaseSensitive |
+| V1 | ids required, string, 1-64 of `[A-Za-z0-9_-]`, case-sensitive | Validator: RejectsMissingFields, IdentifierBoundaries, RejectsBadIdentifierValues, IdentifiersAreCaseSensitiveAndKeptAsIs, FieldNamesAreCaseSensitive |
 | V2 | points integer 1..1000 (reject float, string, bool, 0, 1001) | Validator: PointsRangeAcceptsBoundaries, PointsRangeRejectsOutOfRange, PointsMustBeAJsonInteger |
 | V3 | malformed JSON -> 400 JSON error | Validator: RejectsMalformedJson, RejectsInvalidUtf8; Api: InvalidBodiesReturn400WithJsonError, InvalidUtf8BodyReturns400Not500 |
 | V4 | non-object body -> 400 JSON error | Validator: RejectsNonObjectBodies; Api: InvalidBodiesReturn400WithJsonError |
 | V5 | validation happens before award/wallet checks | Api: ValidationRunsBeforeIdentityAndWalletChecks |
 | A1 | same txn id, different source = different award | Service: SameTransactionIdFromOtherSourceIsSeparateAward; Api: SameTransactionIdDifferentSourceIsNewAward |
 | A2 | new award -> 201, full record, balance +once | Api: NewAwardReturns201AndCreditsWallet; Service: NewAwardCreditsOnce |
-| A3 | matching retry -> 200, same record + awardId, balance unchanged | Api: MatchingRetryReturns200WithOriginalRecord |
+| A3 | matching retry -> 200, same record + awardId, balance unchanged | Api: MatchingRetryReturns200WithOriginalRecord; Service: MatchingRetryReturnsOriginalWithoutCrediting |
 | A4 | conflicting retry (wallet or points) -> 409, nothing changes | Api: ConflictingRetryReturns409AndChangesNothing; Service: ConflictingRetryChangesNothing |
 | A5 | unknown wallet -> 404, identity NOT consumed, corrected retry 201 | Api: UnknownWalletReturns404AndIdentityStaysUsable; Service: UnknownWalletDoesNotConsumeIdentity |
 | C1 | N identical concurrent -> exactly one 201, N-1 x 200, same awardId | Concurrency: ConcurrentIdenticalRequestsProduceOne201; Service: ConcurrencyIdenticalRequestsProduceOneAward |
@@ -207,6 +207,7 @@ So every HTTP test gets a fresh app and fresh wallets, and no test depends on an
 | E2 | wrong method on a known path -> 405 + `Allow` (beyond the brief) | Api: WrongMethodReturns405WithAllowHeader |
 | E3 | malformed or non-UTF-8 wallet id on GET -> 404, not 500 | Api: UnknownWalletLookupIs404 (`w100`, `bad.id`, `%FF`) |
 | E4 | body over 64 KiB -> 413; unknown route -> JSON 404 (beyond the brief) | Api: OversizedBodyReturns413, UnknownRouteReturnsJson404 |
+| E5 | valid body accepted; unknown fields ignored; every invalid field reported at once | Validator: AcceptsValidRequest, IgnoresUnknownFields, ReportsEveryInvalidField |
 
 ## 7. How the project was built, step by step
 
