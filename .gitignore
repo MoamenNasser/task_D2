@@ -1,0 +1,13 @@
+# build output
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+# editor exports / local files
+*.docx
+docs/*.pdf
+docs/*_tmp.html
