@@ -13,7 +13,8 @@ See [HANDOFF_NOTES.md](HANDOFF_NOTES.md) for key decisions, the checks that were
 | .NET SDK | 8.0.133 (`dotnet --info`) |
 | Runtime | Microsoft.NETCore.App 8.0.33, Microsoft.AspNetCore.App 8.0.33 |
 | Target | `net8.0` |
-| Test packages | xUnit 2.9.2, Microsoft.AspNetCore.Mvc.Testing 8.0.11, Microsoft.NET.Test.Sdk 17.11.1 |
+| Test packages | xUnit 2.9.2, xunit.runner.visualstudio 2.8.2, Microsoft.AspNetCore.Mvc.Testing 8.0.11, Microsoft.NET.Test.Sdk 17.11.1 |
+| Docs tool | DocFX 2.81.0, a local dotnet tool (`.config/dotnet-tools.json`) |
 
 Any .NET 8 SDK should work. On Ubuntu 22.04: `sudo apt install dotnet-sdk-8.0`.
 The first build restores the NuGet packages, which needs network access. The API itself has no package dependencies.
@@ -123,7 +124,8 @@ src/LoyaltyPoints.Api/
 tests/LoyaltyPoints.Tests/            xUnit tests
 scripts/smoke.sh                      curl checks against a running service
 docs/WALKTHROUGH.md                   how the code works and how the tests prove it
-docs/docfx.json                       DocFX config for the generated HTML docs
+docs/docfx.json, index.md, toc.yml    DocFX config and site pages for the generated HTML docs
+.config/dotnet-tools.json             pins the DocFX version for `dotnet tool restore`
 ```
 
 ## Design notes
@@ -136,7 +138,7 @@ docs/docfx.json                       DocFX config for the generated HTML docs
 - The award is stored before the wallet is credited. `Dictionary.Add` can throw and the addition cannot,
   so a failure never leaves a credited balance without an award.
 - `WalletService` is registered as a singleton, because it is the state. Restarting the process resets it.
-- Every type, method and field carries an XML doc comment. For public members this is enforced: `GenerateDocumentationFile`
+- Every type, method and field in `src/` carries an XML doc comment. For public members this is enforced: `GenerateDocumentationFile`
   is on and warnings are errors, so a missing comment fails the build. DocFX turns the comments into the HTML reference.
 
 ## Tests
